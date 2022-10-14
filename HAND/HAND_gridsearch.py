@@ -1,13 +1,12 @@
-import os
 import argparse
-import matplotlib.pyplot as plt
-from osgeo import gdal
 import logging
+import os
 import sys
 
+import matplotlib.pyplot as plt
 import numpy as np
-
 from asf_tools.hand.cal_hand_by_dem import make_asf_hand
+from osgeo import gdal
 
 log = logging.getLogger(__name__)
 
@@ -16,26 +15,45 @@ def plot_hand(dem_tile: str, raster_dir, acc_range=np.linspace(200, 1600, 29)):
     if raster_dir is None:
         raster_dir = os.getcwd()
 
-    num_zeros = np.zeros(len(acc_range))
-    num_nan = np.zeros(len(acc_range))
-
     dem_name = dem_tile.split('/')
     hand_base = dem_name[-1].replace('DEM.tif', 'HAND_')
 
+    num_zeros = np.zeros(len(acc_range))
+    num_nan = np.zeros(len(acc_range))
+
     for i, acc_thresh in enumerate(acc_range):
-        print(acc_thresh)
+        log.info(acc_thresh)
         try:
             hand_raster = raster_dir + '/' + hand_base + str(acc_thresh) + '.tif'
             hand_array = gdal.Open(str(hand_raster), gdal.GA_ReadOnly).ReadAsArray()
         except:
-            print(f'raster for acc={acc_thresh} doesnt exist! Creating')
+            log.info(f'raster for acc={acc_thresh} doesnt exist! Creating')
             hand_raster, acc_raster = make_asf_hand(dem_tile, acc_thresh=acc_thresh)
             hand_array = gdal.Open(str(hand_raster), gdal.GA_ReadOnly).ReadAsArray()
         zeros = np.where(hand_array == 0)
         num_zeros[i] = len(zeros[0])
         nans = np.isnan(hand_array)
-        nans_tf = np.where(nans == True)
+        nans_tf = np.where(nans==True)
         num_nan[i] = len(nans_tf[0])
+
+    dem_name = dem_tile.split('/')
+    log.info(f'Done working through rasters for {dem_name}. \n Plotting.')
+
+    plt.figure()
+    plt.scatter(acc_range, num_zeros)
+    plt.title(f'Number of Zeros for {dem_name[8]}')
+    plt.ylabel('Number of zeros')
+    plt.xlabel('ACC thresh')
+    plt.savefig(f'{dem_name}_ZeroPlot.png')
+    plt.show()
+
+    plt.figure()
+    plt.scatter(acc_range, num_nan)
+    plt.title(f'Number of NAN for {dem_name[8]}')
+    plt.ylabel('Number of NAN')
+    plt.xlabel('ACC thresh')
+    plt.savefig(f'{dem_name}_NaNPlot.png')
+    plt.show()
 
     return acc_range, num_zeros, num_nan
 
@@ -58,21 +76,7 @@ def main():
     log.debug(' '.join(sys.argv))
     log.info(f'Making HAND tile from {args.dem_tile}')
 
-    acc_range, num_zeros, num_nan = plot_hand(args.dem_tile, args.raster_dir)
-
-    dem_name = args.dem_tile.split('/')
-
-    plt.scatter(acc_range, num_zeros)
-    plt.title(f'Number of Zeros for {dem_name[8]}')
-    plt.ylabel('Number of zeros')
-    plt.xlabel('ACC thresh')
-    plt.show()
-
-    plt.scatter(acc_range, num_nan)
-    plt.title(f'Number of NAN for {dem_name[8]}')
-    plt.ylabel('Number of NAN')
-    plt.xlabel('ACC thresh')
-    plt.show()
+    plot_hand(args.dem_tile, args.raster_dir)
 
 
 if __name__ == '__main__':
