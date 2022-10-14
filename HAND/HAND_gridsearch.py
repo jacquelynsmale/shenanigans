@@ -37,25 +37,27 @@ def plot_hand(dem_tile: str, raster_dir, acc_range=np.linspace(200, 1600, 29)):
         num_nan[i] = len(nans_tf[0])
 
     dem_name = dem_tile.split('/')
-    log.info(f'Done working through rasters for {dem_name}. \n Plotting.')
+    log.info(f'Done working through rasters for {dem_name[-1]}. \n Plotting.')
 
     plt.figure()
     plt.scatter(acc_range, num_zeros)
-    plt.title(f'Number of Zeros for {dem_name[8]}')
+    plt.title(f'Number of Zeros for {dem_name[-1]}')
     plt.ylabel('Number of zeros')
     plt.xlabel('ACC thresh')
-    plt.savefig(f'{dem_name}_ZeroPlot.png')
+    plt.savefig(f'{dem_name[-1]}_ZeroPlot.png')
     plt.show()
 
+    '''
     plt.figure()
     plt.scatter(acc_range, num_nan)
-    plt.title(f'Number of NAN for {dem_name[8]}')
+    plt.title(f'Number of NAN for {dem_name[-1]}')
     plt.ylabel('Number of NAN')
     plt.xlabel('ACC thresh')
-    plt.savefig(f'{dem_name}_NaNPlot.png')
+    plt.savefig(f'{dem_name[-1]}_NaNPlot.png')
     plt.show()
+    '''
 
-    return acc_range, num_zeros, num_nan
+    return #acc_range, num_zeros, num_nan
 
 
 def main():
